@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.0-cudnn7-runtime-centos7
+FROM nvidia/cuda:9.0-cudnn7-devel-centos7
 LABEL maintainer "Yixiao Chen xiaoxx0522@gmail.com"
 
 # For now, only CentOS-Base.repo (USTC source, only users in China mainland should use it) and bazel.repo are in 'repo' directory. 
