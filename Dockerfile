@@ -1,11 +1,6 @@
-From centos:7
-LABEL maintainer "Tim Chen timchen314@163.com"
-# For now, only CentOS-Base.repo (USTC source, only users in China mainland should use it) and bazel.repo are in 'repo' directory. 
-COPY repo/*repo /etc/yum.repos.d/
-# Add additional source to yum
-RUN yum makecache && yum install -y epel-release \
-    centos-release-scl 
-RUN rpm --import /etc/pki/rpm-gpg/RPM*
+FROM nvidia/cuda:9.0-cudnn7-runtime-centos7
+LABEL maintainer "Yixiao Chen xiaoxx0522@gmail.com"
+
 # bazel, gcc, gcc-c++ and path are needed by tensorflow;   
 # autoconf, automake, cmake, libtool, make, wget are needed for protobut et. al.;  
 # epel-release, cmake3, centos-release-scl, devtoolset-4-gcc*, scl-utils are needed for deepmd-kit(need gcc5.x);
@@ -39,10 +34,20 @@ RUN cd /root && \
     git clone https://github.com/tensorflow/tensorflow tensorflow && \
     cd tensorflow && git checkout "r$tensorflow_version"
 # install tensorflow C lib
-COPY install_input /root/tensorflow
-RUN cd /root/tensorflow && ./configure < install_input &&  bazel build -c opt \
+ENV CI_BUILD_PYTHON python
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+ENV TF_NEED_CUDA 1
+ENV TF_CUDA_COMPUTE_CAPABILITIES=3.0,3.5,5.2,6.0,6.1
+ENV TF_CUDA_VERSION=9.0
+ENV TF_CUDNN_VERSION=7
+RUN cd /root/tensorflow && \
+    ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 && \
+    LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
+    tensorflow/tools/ci_build/builds/configured GPU \ 
+    bazel build -c opt --copt=-mavx --config=cuda \
+	--cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
     # --incompatible_load_argument_is_label=false \
-    --copt=-msse4.2 --verbose_failures //tensorflow:libtensorflow_cc.so 
+    --verbose_failures //tensorflow:libtensorflow_cc.so 
 # install the dependencies of tensorflow and xdrfile
 COPY install*.sh copy_lib.sh /root/
 RUN cd /root/tensorflow && tensorflow/contrib/makefile/download_dependencies.sh && \

@@ -5,7 +5,8 @@ Thanks to @[TimChen314](https://github.com/TimChen314) and @[frankhan91](https:/
 For detailed usage please refer to the [paper](https://arxiv.org/abs/1712.03641) and [github repository](https://github.com/deepmodeling/deepmd-kit).
 
 ## Use docker images
-`docker pull yixiaoc/deepmd`
+For cpu only use `docker pull yixiaoc/deepmd:cpu`.
+For gpu support use `docker pull yixiaoc/deepmd:gpu`.
 
 ## Build on your own
 `git clone https://github.com/frankhan91/deepmd-kit_docker.git deepmd-kit_docker`   
