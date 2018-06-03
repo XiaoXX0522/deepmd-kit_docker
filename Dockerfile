@@ -1,6 +1,12 @@
 FROM nvidia/cuda:9.0-cudnn7-runtime-centos7
 LABEL maintainer "Yixiao Chen xiaoxx0522@gmail.com"
 
+# For now, only CentOS-Base.repo (USTC source, only users in China mainland should use it) and bazel.repo are in 'repo' directory. 
+COPY repo/bazel.repo /etc/yum.repos.d/
+# Add additional source to yum
+RUN yum makecache && yum install -y epel-release \
+    centos-release-scl 
+RUN rpm --import /etc/pki/rpm-gpg/RPM*
 # bazel, gcc, gcc-c++ and path are needed by tensorflow;   
 # autoconf, automake, cmake, libtool, make, wget are needed for protobut et. al.;  
 # epel-release, cmake3, centos-release-scl, devtoolset-4-gcc*, scl-utils are needed for deepmd-kit(need gcc5.x);
