@@ -34,6 +34,11 @@ ENV tensorflow_root=/opt/tensorflow xdrfile_root=/opt/xdrfile \
     PATH="/opt/conda3/bin:${PATH}"
 ARG tensorflow_version=1.5
 ENV tensorflow_version=$tensorflow_version
+# install tensorflow in python3 module
+RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    sh Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda3/ && \
+    conda config --add channels conda-forge && \
+    conda install -c conda-forge -y tensorflow=$tensorflow_version
 # If download lammps with git, there will be errors during installion. Hence we'll download lammps later on.
 RUN cd /root && \
     git clone https://github.com/deepmodeling/deepmd-kit.git deepmd-kit && \
@@ -41,19 +46,15 @@ RUN cd /root && \
     cd tensorflow && git checkout "r$tensorflow_version"
 # install tensorflow C lib
 ENV CI_BUILD_PYTHON python
-ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 ENV TF_NEED_CUDA 1
 ENV TF_CUDA_COMPUTE_CAPABILITIES=3.0,3.5,5.2,6.0,6.1
 ENV TF_CUDA_VERSION=9.0
 ENV TF_CUDNN_VERSION=7
 RUN cd /root/tensorflow && \
-    ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 && \
-    LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
     tensorflow/tools/ci_build/builds/configured GPU \ 
-    bazel build -c opt --copt=-mavx --config=cuda \
-	--cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
+    bazel build -c opt --copt=-msse4.2 --config=cuda \
     # --incompatible_load_argument_is_label=false \
-    --verbose_failures //tensorflow:libtensorflow_cc.so 
+    //tensorflow:libtensorflow_cc.so 
 # install the dependencies of tensorflow and xdrfile
 COPY install*.sh copy_lib.sh /root/
 RUN cd /root/tensorflow && tensorflow/contrib/makefile/download_dependencies.sh && \
@@ -66,9 +67,5 @@ RUN cd /root && source /opt/rh/devtoolset-4/enable && \
 # install lammps
 RUN cd /root && wget https://codeload.github.com/lammps/lammps/tar.gz/patch_31Mar2017 && \
     tar xf patch_31Mar2017 && source /opt/rh/devtoolset-4/enable && sh -x install_lammps.sh
-# install tensorflow in python3 module
-RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    sh Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda3/ && \
-    conda config --add channels conda-forge && \
-    conda install -c conda-forge -y tensorflow=$tensorflow_version
+
 CMD ["/bin/bash"]
