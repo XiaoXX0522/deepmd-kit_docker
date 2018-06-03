@@ -1,7 +1,7 @@
-From centos:7
-LABEL maintainer "Tim Chen timchen314@163.com"
+FROM centos:7
+LABEL maintainer "Yixiao Chen xiaoxx0522@gmail.com"
 # For now, only CentOS-Base.repo (USTC source, only users in China mainland should use it) and bazel.repo are in 'repo' directory. 
-COPY repo/*repo /etc/yum.repos.d/
+COPY repo/bazel.repo /etc/yum.repos.d/
 # Add additional source to yum
 RUN yum makecache && yum install -y epel-release \
     centos-release-scl 
